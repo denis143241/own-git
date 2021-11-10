@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://unpkg.com/vue"></script>
+    <title>Git</title>
+  </head>
+  <body>
+    <div id="app">
+      <div v-if="rep === null" class="create-rep">
+        <div class="btn-wrapper">
+          <input type="text" v-model="nameOfRep" />
+          <button @click="init">Create repository</button>
+        </div>
+      </div>
+
+      <div v-else class="areaForCmd">
+        <div class="cmd-git">
+          <input type="text" v-model="gitCommand" />
+        </div>
+        <div class="branch">branch: {{this.rep.HEAD.name}}</div>
+        <div class="blocks">
+          <div class="block" v-for="commit in logs"><span class="flexBox">{{commit?.id}}</span></div>
+        </div>
+      </div>
+      <div class="cmd-history">
+        <div class="lines">
+          <div class="line" v-for="line in allHistoryCommand">{{line}}</div>
+        </div>
+      </div>
+    </div>
+    <script src="./script.js"></script>
+    <script>
+      var webstore = new Vue({
+        el: "#app",
+        mounted() {
+          document.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              this.runCommand();
+              this.allHistoryCommand.push(this.gitCommand)
+              this.gitCommand = "";
+            }
+          });
+        },
+        data() {
+          return {
+            rep: null,
+            nameOfRep: "",
+            gitCommand: "",
+            logs: [],
+            allHistoryCommand: [],
+          };
+        },
+        methods: {
+          init() {
+            this.rep = new Git(this.nameOfRep);
+            setInterval(() => {
+              this.logs = this.rep.log();
+            }, 1000 / 30);
+          },
+          runCommand() {
+            let arrayOfCommand = this.gitCommand.split(" "); // неполучится ввести более одного слова в кавычках
+            if (arrayOfCommand[0] !== "git") {
+              console.log("You should begin your command with 'git'");
+              return;
+            }
+            let query = arrayOfCommand[1];
+            switch (query) {
+              case "commit":
+                this.rep.commit(this.correctCommand(arrayOfCommand[2]));
+                break;
+              case "checkout":
+                this.rep.checkout(this.correctCommand(arrayOfCommand[2]));
+                break;
+              case "log":
+                console.log(this.rep.log());
+                break;
+              default:
+                console.log("If it correct command I don't know it yet");
+            }
+          },
+          correctCommand(text) {
+            return text.slice(1, text.length - 1);
+          },
+        },
+      });
+    </script>
+  </body>
+</html>
+
+<style>
+  #app {
+    display: flex;
+  }
+  .areaForCmd {
+    width: 50%;
+  }
+  .block {
+    display: inline-block;
+    background-color: aqua;
+    margin: 10px;
+    height:50px;
+    width: 50px;
+  }
+  .flexBox {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+  }
+</style>
